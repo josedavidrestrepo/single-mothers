@@ -38,7 +38,8 @@ ui <- fluidPage(
       
       tabsetPanel(type = "tabs",
                   tabPanel("Estructura Familiar", visNetworkOutput("network")),
-                  tabPanel("Datos", dataTableOutput("tabla"))
+                  tabPanel("Datos", dataTableOutput("tabla")),
+                  tabPanel("Video", htmlOutput("frame"))
       )
     )
   )

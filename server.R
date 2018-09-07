@@ -107,4 +107,8 @@ function(input, output) {
     familia <- sqldf(query, dbname = "mydata", user = "")
     familia
   })
+  
+  output$frame <- renderUI({
+    tags$iframe(src="https://biteable.com/watch/embed/tae-2018-02-1990018", height=500, width=800)
+  })
 }
