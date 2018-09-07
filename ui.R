@@ -4,8 +4,8 @@ library(sqldf)
 
 # create an empty database.
 # can skip this step if database already exists.
- sqldf("attach mydata as new")
-# 
+sqldf("attach mydata as new")
+ 
 #read.csv.sql("CYCH2017.csv", sql = "create table main.hogar as select * from file",
 #             dbname = "mydata")
 #read.csv.sql("Salud.csv", sql = "create table main.salud as select * from file",
@@ -19,22 +19,27 @@ library(sqldf)
 #closeAllConnections()
 
 # look at first three lines
-dirs <- sqldf("select distinct LLAVEHOG from hogar", dbname = "mydata", user = "")
+dirs <- sqldf("SELECT DISTINCT LLAVEHOG FROM hogar", dbname = "mydata")
 
 ui <- fluidPage(
+  
   sidebarLayout(
+    
     sidebarPanel(
-      verticalLayout(
-        selectInput("LLAVEHOG", "LLAVE HOGAR:",
-                    dirs)
-        
-      )
+        width = 3,
+        selectInput("LLAVEHOG", 
+                    "Selecciona un hogar",
+                    c(dirs)
+        )
+      
     ),
+    
     mainPanel(
-      verticalLayout(
-        visNetworkOutput("network")
+      
+      tabsetPanel(type = "tabs",
+                  tabPanel("Estructura Familiar", visNetworkOutput("network")),
+                  tabPanel("Datos", dataTableOutput("tabla"))
       )
     )
-  ),
-  dataTableOutput("tabla")
+  )
 )

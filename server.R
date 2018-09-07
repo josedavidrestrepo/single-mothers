@@ -66,7 +66,7 @@ function(input, output) {
                         label = label)
     edges <- data.frame(from = fromNodes, to = toNodes, dashes = dashes, arrows = arrows)
     
-    visNetwork(nodes, edges, main = "Estructura de Hogar", width = "100%") %>%
+    visNetwork(nodes, edges,width = "100%") %>%
       visGroups(groupname = "SingleMother", shape = "icon", 
                 icon = list(code = "f182", color = 'lightgreen')) %>%
       visGroups(groupname = "Man", shape = "icon", 
@@ -97,11 +97,10 @@ function(input, output) {
     dir <- input$LLAVEHOG
     query <- paste("SELECT m.ORDEN as id, P6081 as vivePadre, P6083 as viveMadre, P6087 as eduPadre, 
                           P6088 as eduMadre, P6090 as afiliadoSalud, P6127 as estadoSalud, 
-                          P6160 as sabeLeerEscribir, P1070 as tipoVivienda, P9030 as condiVida
+                          P6160 as sabeLeerEscribir, P9030 as condiVida
                    FROM hogar m
                    INNER join salud s ON m.LLAVEHOG = s.LLAVEHOG AND m.ORDEN = s.ORDEN
                    INNER join educacion e ON m.LLAVEHOG = e.LLAVEHOG AND m.ORDEN = e.ORDEN
-                   INNER join vivienda v ON m.DIRECTORIO = v.DIRECTORIO
                    INNER join condivida c ON m.LLAVEHOG = c.LLAVEHOG
                    WHERE m.LLAVEHOG = '",dir,sep="")
     query <- paste(query,"\'",sep="")
