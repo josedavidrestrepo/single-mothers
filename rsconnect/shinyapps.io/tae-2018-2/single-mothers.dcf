@@ -1,0 +1,12 @@
+name: single-mothers
+title: single-mothers
+username:
+account: tae-2018-2
+server: shinyapps.io
+hostUrl: https://api.shinyapps.io/v1
+appId: 426225
+bundleId: 1574043
+url: https://tae-2018-2.shinyapps.io/single-mothers/
+when: 1536311197.33307
+asMultiple: FALSE
+asStatic: FALSE
