@@ -297,7 +297,8 @@ function(input, output) {
     s<-predict(modelo1,newdata=newdatos)
     h<-10*(s*330-0.5)/(330-1)### este es!!!!
     resultado<-round(h,0)
-    resultado
+    
+    paste("La satisfacción predicha para esta madre soltera es: ", resultado)
   })
   
   output$frame <- renderUI({
