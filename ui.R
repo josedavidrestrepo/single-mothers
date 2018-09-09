@@ -2,51 +2,26 @@ library(shiny)
 library(visNetwork)
 library(sqldf)
 
-# create an empty database.
-# can skip this step if database already exists.
-# sqldf("attach mydata as new")
-#  
-# read.csv.sql("CYCH2017.csv", sql = "create table main.hogar as select * from file",
-#             dbname = "mydata")
-# read.csv.sql("Salud.csv", sql = "create table main.salud as select * from file",
-#             dbname = "mydata")
-# read.csv.sql("Educacion.csv", sql = "create table main.educacion as select * from file",
-#             dbname = "mydata")
-# read.csv.sql("Datosvivienda.csv", sql = "create table main.vivienda as select * from file",
-#            dbname = "mydata")
-# read.csv.sql("Condicionesvida.csv", sql = "create table main.condivida as select * from file",
-#            dbname = "mydata")
-# closeAllConnections()
-
-# look at first three lines
-dirs <- sqldf("SELECT DISTINCT LLAVEHOG FROM hogar", dbname = "mydata")
-
 ui <- fluidPage(
-  titlePanel("Satisfaccion de las madres solteras"),
-  tabsetPanel(
-    tabPanel("Visualizacion",
-             
-             sidebarLayout(
-               
-               sidebarPanel(
-                 width = 3,
-                 selectInput("LLAVEHOG", 
-                             "Selecciona un hogar",
-                             c(dirs)
-                 )
-                 
-               ),
-               
-               mainPanel(
-                 
-                 tabsetPanel(type = "tabs",
-                             tabPanel("Estructura Familiar", visNetworkOutput("network")),
-                             tabPanel("Datos", dataTableOutput("tabla"))
-                 )
-               )
-             )
+  
+  sidebarLayout(
+    
+    sidebarPanel(
+        width = 3,
+        checkboxInput("only_singles", "Sólo hogares con madres solteras"),
+        dataTableOutput("table_llaves")
     ),
-    tabPanel("Prediccion", "Proximamente"),
-    tabPanel("Video", htmlOutput("frame"))
+    
+    mainPanel(
+      
+      tabsetPanel(type = "tabs",
+                  tabPanel(
+                      "Estructura Familiar", 
+                       visNetworkOutput("network")
+                  ),
+                  tabPanel("data", dataTableOutput("table")),
+                  tabPanel("video", htmlOutput("frame"))
+      )
+    )
   )
 )
