@@ -19,14 +19,10 @@ ui <- fluidPage(
             
             mainPanel(
               visNetworkOutput("network"),
-              textOutput("text")
-            ),
-            
-            position = c("right")
+              dataTableOutput("table")
+            )
           )
       ),
-      
-      tabPanel("data", dataTableOutput("table")),
       
       tabPanel("video", htmlOutput("frame"))
       

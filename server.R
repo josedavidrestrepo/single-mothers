@@ -2,12 +2,16 @@ library(shiny)
 library(visNetwork)
 library(DT)
 
-sqldf("attach db as new")
-
-#read.csv.sql("hogar.csv", sql = "create table main.hogar as select * from file",
+# sqldf("attach db as new")
+# 
+# read.csv.sql("hogar.csv", sql = "create table hogar as select * from file",
+#               dbname = "db")
+# read.csv.sql("madres.csv", sql = "create table main.madres as select * from file",
 #             dbname = "db")
-
-#closeAllConnections()
+# 
+# print(sqldf("SELECT * FROM madres", dbname = "db"))
+# 
+# closeAllConnections()
 
 function(input, output) { 
   
@@ -192,22 +196,35 @@ function(input, output) {
   observeEvent(input$current_node_id, {
     myNode$selected <<- input$current_node_id
   })
-  
-  output$text <- renderText(print(myNode$selected))
 
   output$table <- renderDataTable({
-    dir <- input$LLAVEHOG
-    query <- paste("SELECT m.ORDEN as id, P6081 as vivePadre, P6083 as viveMadre, P6087 as eduPadre,
-                          P6088 as eduMadre, P6090 as afiliadoSalud, P6127 as estadoSalud,
-                          P6160 as sabeLeerEscribir, P9030 as condiVida
-                   FROM hogar m
-                   INNER join salud s ON m.LLAVEHOG = s.LLAVEHOG AND m.ORDEN = s.ORDEN
-                   INNER join educacion e ON m.LLAVEHOG = e.LLAVEHOG AND m.ORDEN = e.ORDEN
-                   INNER join condivida c ON m.LLAVEHOG = c.LLAVEHOG
-                   WHERE m.LLAVEHOG = '",dir,sep="")
+    
+    llave_hog_sel = input$table_llaves_cell_clicked$value
+    if (is.null(llave_hog_sel)) {
+      if (input$only_singles)
+      {
+        llave_hog_sel <- '60000131'
+      }
+      else
+      {
+        llave_hog_sel <- '60000001'
+      }
+    }
+    
+    query <- paste("SELECT ORDEN [ID], ANOS_CUMPLIDOS [Edad], CANT_PERSONAS [Cantidad de Personas], 
+                    INGRESO_HOGAR [Ingreso Hogar], AFILIADO_SS [Seguridad Social], LEER_ESCRIBIR [Leer y Escribir], 
+                    COMIDA [Comida], ESTADO_SALUD [Estado de Salud], TIPO_VIVIENDA [Tipo de Vivienda], 
+                    SATISFACCCION_INGRESO [Satisfaccion Ingreso], SATISFACCION_SEGURIDAD [Satisfaccion Seguridad]
+                   FROM madres WHERE LLAVEHOG = '", llave_hog_sel, sep="")
     query <- paste(query,"\'",sep="")
     familia <- sqldf(query, dbname = "db", user = "")
-    familia
+    
+    datatable(
+      familia, rownames = FALSE,
+      options = list(lengthChange = FALSE, dom = 't'),
+      selection = list(mode = 'single')
+    ) %>% formatStyle(0, cursor = 'pointer')
+
   })
   
   output$frame <- renderUI({
