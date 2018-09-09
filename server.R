@@ -130,6 +130,11 @@ function(input, output) {
     )
 
     visNetwork(nodes, edges, width = "100%") %>%
+      visEvents(
+        select = "function(nodes) {
+                    Shiny.onInputChange('current_node_id', nodes.nodes);
+                  ;}"
+      ) %>%
       visGroups(
         groupname = "SingleMother",
         shape = "icon",
@@ -165,7 +170,7 @@ function(input, output) {
         position = 'right', zoom = FALSE
       ) %>%
       visInteraction(
-        dragNodes = FALSE,
+        dragNodes = TRUE,
         dragView = FALSE,
         zoomView = FALSE
       ) %>%
@@ -181,6 +186,14 @@ function(input, output) {
         font = '28px arial black'
       )
   })
+  
+  myNode <- reactiveValues(selected = '')
+  
+  observeEvent(input$current_node_id, {
+    myNode$selected <<- input$current_node_id
+  })
+  
+  output$text <- renderText(print(myNode$selected))
 
   output$table <- renderDataTable({
     dir <- input$LLAVEHOG

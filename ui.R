@@ -18,7 +18,8 @@ ui <- fluidPage(
             ),
             
             mainPanel(
-              visNetworkOutput("network")
+              visNetworkOutput("network"),
+              textOutput("text")
             ),
             
             position = c("right")
