@@ -13,6 +13,51 @@ library(DT)
 # 
 # closeAllConnections()
 
+#cargando los paquetes necesarios
+require(gamlss)
+require(MASS)
+require(betareg)
+require(RColorBrewer)
+
+#Lectura de los datos
+data <- read.csv("madres.csv", header=T)
+sapply(data, class) ##veridficando la clase de las variables
+datos<-data[,-c(1,2,12,13)] #eliminando orden, llave hogar, niveleducativo y salario por na
+datos<-na.omit(datos)
+
+###------------------- MODELOS -----------------------------###
+set.seed(1) #semilla para que a todos nos salgan los mismos resultados
+trainingRows <- sample(1:nrow(datos), 0.7 * nrow(datos))
+trainingData <- datos[trainingRows, ] ##datos para entrenar el modelo
+testData <- datos[-trainingRows, ] ##datos para test del modelo
+
+#cambiando la clase de la variable respuesta
+datos$SATISFACCION_VIDA<-as.numeric(datos$SATISFACCION_VIDA)
+# Modelo Beta
+z<-(datos$SATISFACCION_VIDA)/10 # reduciendo el rango a (0,1)
+zt<-(z*(length(z)-1)+0.5)/length(z) #aplicando la transformacion 
+#modelo lm
+modelo1<-lm(zt~ ANOS_CUMPLIDOS+ CANT_PERSONAS+AFILIADO_SS+
+              LEER_ESCRIBIR+INGRESO_HOGAR+COMIDA+SATISFACCCION_INGRESO+
+              TIPO_VIVIENDA +ESTADO_SALUD+SATISFACCION_SEGURIDAD+
+              SATISFACCCION_INGRESO,
+            data=datos)
+# summary(modelo1)
+
+#modelo beta
+modelo2<-betareg(zt~ ANOS_CUMPLIDOS+ CANT_PERSONAS+AFILIADO_SS+
+                   LEER_ESCRIBIR+INGRESO_HOGAR+
+                   COMIDA+SATISFACCCION_INGRESO+TIPO_VIVIENDA
+                 +ESTADO_SALUD+SATISFACCION_SEGURIDAD+
+                   SATISFACCCION_INGRESO,
+                 data=datos)
+
+# summary(modelo2)
+# plot(modelo2)
+
+## PARA HACER LAS PREDICCIONES
+
+
 function(input, output) { 
   
   #Datatable con la lista de hogares por llave
@@ -225,6 +270,34 @@ function(input, output) {
       selection = list(mode = 'single')
     ) %>% formatStyle(0, cursor = 'pointer')
 
+  })
+  
+  output$predict = renderText({
+    
+    read_write <- 2
+    if (input$read_write){
+      read_write <- 1
+    }
+    
+    eating <- 2
+    if (input$eating){
+      eating <- 1
+    }
+    
+    newdatos<-data.frame(
+      wt=input$age, input$count_persons, as.numeric(input$ss_joined), 
+      read_write, as.numeric(input$monthly_income), eating, input$income_satisfaction,
+      as.numeric(input$house_type), as.numeric(input$health), input$security_satisfaction,
+      input$income_satisfaction)
+    names(newdatos) <- c("ANOS_CUMPLIDOS", "CANT_PERSONAS","AFILIADO_SS",
+                         "LEER_ESCRIBIR","INGRESO_HOGAR",
+                         "COMIDA","SATISFACCCION_INGRESO","TIPO_VIVIENDA",
+                         "ESTADO_SALUD","SATISFACCION_SEGURIDAD",
+                         "SATISFACCCION_INGRESO")
+    s<-predict(modelo1,newdata=newdatos)
+    h<-10*(s*330-0.5)/(330-1)### este es!!!!
+    resultado<-round(h,0)
+    resultado
   })
   
   output$frame <- renderUI({
