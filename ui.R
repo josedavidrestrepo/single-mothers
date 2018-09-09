@@ -2,6 +2,7 @@ library(shiny)
 library(visNetwork)
 library(sqldf)
 library(shinyWidgets)
+library(DT)
 
 ui <- fluidPage(
   
@@ -15,12 +16,12 @@ ui <- fluidPage(
             sidebarPanel(
               width = 3,
               checkboxInput("only_singles", "Sólo hogares con madres solteras", TRUE),
-              dataTableOutput("table_llaves")
+              DTOutput("table_llaves")
             ),
             
             mainPanel(
               visNetworkOutput("network"),
-              dataTableOutput("table")
+              DTOutput("table")
             )
           )
       ),

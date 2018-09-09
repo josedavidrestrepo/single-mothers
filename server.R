@@ -1,41 +1,39 @@
-library(shiny)
-library(visNetwork)
-library(DT)
-
-# sqldf("attach db as new")
-# 
-# read.csv.sql("hogar.csv", sql = "create table hogar as select * from file",
-#               dbname = "db")
-# read.csv.sql("madres.csv", sql = "create table main.madres as select * from file",
-#             dbname = "db")
-# 
-# print(sqldf("SELECT * FROM madres", dbname = "db"))
-# 
-# closeAllConnections()
-
-#cargando los paquetes necesarios
 require(gamlss)
 require(MASS)
 require(betareg)
 require(RColorBrewer)
+library(DT)
+library(shiny)
+library(visNetwork)
+
+
+# sqldf("attach db as new")
+#
+# read.csv.sql("hogar.csv", sql = "create table hogar as select * from file",
+#               dbname = "db")
+# read.csv.sql("madres.csv", sql = "create table main.madres as select * from file",
+#             dbname = "db")
+# closeAllConnections()
+
+#cargando los paquetes necesarios
 
 #Lectura de los datos
 data <- read.csv("madres.csv", header=T)
 sapply(data, class) ##veridficando la clase de las variables
 datos<-data[,-c(1,2,12,13)] #eliminando orden, llave hogar, niveleducativo y salario por na
 datos<-na.omit(datos)
-
-###------------------- MODELOS -----------------------------###
+#
+# ###------------------- MODELOS -----------------------------###
 set.seed(1) #semilla para que a todos nos salgan los mismos resultados
 trainingRows <- sample(1:nrow(datos), 0.7 * nrow(datos))
 trainingData <- datos[trainingRows, ] ##datos para entrenar el modelo
 testData <- datos[-trainingRows, ] ##datos para test del modelo
-
-#cambiando la clase de la variable respuesta
+#
+# #cambiando la clase de la variable respuesta
 datos$SATISFACCION_VIDA<-as.numeric(datos$SATISFACCION_VIDA)
 # Modelo Beta
 z<-(datos$SATISFACCION_VIDA)/10 # reduciendo el rango a (0,1)
-zt<-(z*(length(z)-1)+0.5)/length(z) #aplicando la transformacion 
+zt<-(z*(length(z)-1)+0.5)/length(z) #aplicando la transformacion
 #modelo lm
 modelo1<-lm(zt~ ANOS_CUMPLIDOS+ CANT_PERSONAS+AFILIADO_SS+
               LEER_ESCRIBIR+INGRESO_HOGAR+COMIDA+SATISFACCCION_INGRESO+
@@ -291,7 +289,7 @@ function(input, output) {
       input$income_satisfaction)
     names(newdatos) <- c("ANOS_CUMPLIDOS", "CANT_PERSONAS","AFILIADO_SS",
                          "LEER_ESCRIBIR","INGRESO_HOGAR",
-                         "COMIDA","SATISFACCCION_INGRESO","TIPO_VIVIENDA",
+                           "COMIDA","SATISFACCCION_INGRESO","TIPO_VIVIENDA",
                          "ESTADO_SALUD","SATISFACCION_SEGURIDAD",
                          "SATISFACCCION_INGRESO")
     s<-predict(modelo1,newdata=newdatos)
