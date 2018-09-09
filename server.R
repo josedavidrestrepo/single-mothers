@@ -37,7 +37,7 @@ function(input, output) {
       llaves_data_set, rownames = FALSE,
       options = list(lengthChange = FALSE, dom = 'tlipr'),
       selection = list(mode = 'single', target = 'row', selected = c(1)),
-      filter = 'top'
+      filter = 'bottom'
     ) %>% formatStyle(0, cursor = 'pointer')
     
   })
@@ -46,7 +46,16 @@ function(input, output) {
     
     llave_hog_sel = input$table_llaves_cell_clicked$value
     
-    if (is.null(llave_hog_sel)) llave_hog_sel <- '60000001'
+    if (is.null(llave_hog_sel)) {
+      if (input$only_singles)
+      {
+        llave_hog_sel <- '60000131'
+      }
+      else
+      {
+        llave_hog_sel <- '60000001'
+      }
+    }
     
     query <- paste("SELECT * FROM hogar WHERE LLAVEHOG = '\"", llave_hog_sel, sep="")
     query <- paste(query, "\"'" ,sep="")
@@ -60,25 +69,26 @@ function(input, output) {
     arrows = c()
 
     for (row in 1:nrow(familia)) {
-      queryhijos <- paste("SELECT COUNT(DISTINCT ORDEN) HIJOS FROM hogar WHERE LLAVEHOG = '\"",llave_hog_sel,sep="")
-      queryhijos <- paste(queryhijos,"\"\'"," AND P6083 = 1 AND P6083S1 = ",row,sep="")
+      queryhijos <- paste("SELECT COUNT(DISTINCT ORDEN) HIJOS FROM hogar WHERE LLAVEHOG = '\"", llave_hog_sel, sep="")
+      queryhijos <- paste(queryhijos,"\"\'"," AND P6083 = 1 AND P6083S1 = ", row, sep="")
       numHijos <- sqldf(queryhijos, dbname = "db", user = "")
 
       label = c(label, row)
       sexo <- familia[row, 'P6020']
-      relacion <- familia[row, 'P6051']
       padre <- familia[row, 'P6081']
       madre <- familia[row, 'P6083']
       conyuge <- familia[row, 'P6071']
       estadocivil <- familia[row, 'P5502']
 
+      #Esposos
       if (familia[row,"P6071"] == 1) {
         fromNodes <- c(fromNodes,row)
         toNodes <- c(toNodes,familia[row,"P6071S1"])
         dashes = c(dashes, TRUE)
         arrows = c(arrows, "none")
       }
-
+      
+      #Padre
       if(padre == 1){
         fromNodes <- c(fromNodes,familia[row, 'P6081S1'])
         toNodes <- c(toNodes, row)
@@ -86,6 +96,7 @@ function(input, output) {
         arrows = c(arrows, "to")
       }
 
+      #Madre
       if(madre == 1){
         fromNodes <- c(fromNodes, familia[row, 'P6083S1'])
         toNodes <- c(toNodes, row)
@@ -93,9 +104,9 @@ function(input, output) {
         arrows = c(arrows, "to")
       }
 
+      #Madre soltera
       if(sexo == 2){
-        if (numHijos > 0 && (estadocivil == 3 || estadocivil == 4 || estadocivil == 5)
-              && (conyuge == 2 || conyuge == Inf)) {
+        if (numHijos > 0 && estadocivil == 5) {
           Groups = c(Groups, 'SingleMother')
         } else{
           Groups = c(Groups, 'Woman')
@@ -105,36 +116,70 @@ function(input, output) {
       }
     }
 
-    nodes <- data.frame(id = 1:nrow(familia),
-                        group = Groups,
-                        label = label)
-    edges <- data.frame(from = fromNodes, to = toNodes, dashes = dashes, arrows = arrows)
+    nodes <- data.frame(
+      id = 1:nrow(familia),
+      group = Groups,
+      label = label
+    )
+    
+    edges <- data.frame(
+      from = fromNodes, 
+      to = toNodes, 
+      dashes = dashes, 
+      arrows = arrows
+    )
 
-    visNetwork(nodes, edges,width = "100%") %>%
-      visGroups(groupname = "SingleMother", shape = "icon",
-                icon = list(code = "f182", color = 'lightgreen')) %>%
-      visGroups(groupname = "Man", shape = "icon",
-              icon = list(code = "f183", color = "skyblue")) %>%
-      visGroups(groupname = "Woman", shape = "icon",
-                icon = list(code = "f182", color = "pink")) %>%
+    visNetwork(nodes, edges, width = "100%") %>%
+      visGroups(
+        groupname = "SingleMother",
+        shape = "icon",
+        icon = list(code = "f182", color = 'lightgreen')
+      ) %>%
+      visGroups(
+        groupname = "Man", 
+        shape = "icon",
+        icon = list(code = "f183", color = "skyblue")
+      ) %>%
+      visGroups(
+        groupname = "Woman", 
+        shape = "icon",
+        icon = list(code = "f182", color = "pink")
+      ) %>%
       addFontAwesome() %>%
-      visLegend(addNodes = list(
-                list(label = "Hombre", shape = "icon",
-                     icon = list(code = "f183", color = 'skyblue')),
-                list(label = "Mujer", shape = "icon",
-                     icon = list(code = "f182", color = "pink")),
-                list(label = "Madre Soltera", shape = "icon",
-                     icon = list(code = "f182", color = 'lightgreen'))),
-                addEdges = data.frame(label = c('Padre/Madre de', 'Esposo(a) de'),
-                                      dashes = c(FALSE, TRUE), color = 'black', arrows = c("to","none")),
-                width = 0.3, useGroups = FALSE, position = 'right') %>%
-      visInteraction(dragNodes = FALSE,
-               dragView = FALSE,
-               zoomView = FALSE) %>%
-      visEdges(color = list(color = "black")) %>%
-      visPhysics(solver = "forceAtlas2Based",
-                 forceAtlas2Based = list(gravitationalConstant = -50)) %>%
-      visNodes(size = 35, font = '28px arial black')
+      visLegend(
+        addNodes = list(
+          list(label = "Hombre", shape = "icon",
+               icon = list(code = "f183", color = 'skyblue')),
+          list(label = "Mujer", shape = "icon",
+               icon = list(code = "f182", color = "pink")),
+          list(label = "Madre Soltera", shape = "icon",
+               icon = list(code = "f182", color = 'lightgreen'))
+        ),
+        addEdges = data.frame(
+          label = c('Padre/Madre de', 'Esposo(a) de'),
+          dashes = c(FALSE, TRUE), 
+          color = 'black', 
+          arrows = c("to","none")
+        ),
+        width = 0.3, useGroups = FALSE,
+        position = 'right', zoom = FALSE
+      ) %>%
+      visInteraction(
+        dragNodes = FALSE,
+        dragView = FALSE,
+        zoomView = FALSE
+      ) %>%
+      visEdges(
+        color = list(color = "black")
+      ) %>%
+      visPhysics(
+        solver = "forceAtlas2Based",
+        forceAtlas2Based = list(gravitationalConstant = -50)
+      ) %>%
+      visNodes(
+        size = 35, 
+        font = '28px arial black'
+      )
   })
 
   output$table <- renderDataTable({
