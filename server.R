@@ -274,14 +274,26 @@ function(input, output) {
   
   output$predict = renderText({
     
+    
+    
+    age <- input$age
+    sons <- input$sons
+    count_persons <- input$count_persons
+    house_type <- as.numeric(input$house_type)
+    home_income <- as.numeric(input$home_income)
+    income_satisfaction <- input$income_satisfaction
+    
     eating <- 2
     if (input$eating){
       eating <- 1
     }
     
+    if (is.na(age)) age <- 0
+    if (is.na(sons)) sons <- 0
+    
     newdatos<-data.frame(
-      wt=input$age, input$count_persons, as.numeric(input$home_income), eating, input$sons,
-          as.numeric(input$house_type), input$income_satisfaction
+      wt= age, count_persons, home_income, eating, sons,
+        house_type, income_satisfaction
     )
     names(newdatos) <-  c("ANOS_CUMPLIDOS", "CANT_PERSONAS",
                           "INGRESO_HOGAR",
@@ -292,7 +304,14 @@ function(input, output) {
     
     resultado <- round(s,0)
     
-    paste("La satisfacción predicha para esta madre soltera es: ", resultado)
+    if (resultado > 10) resultado <- 10
+    if (resultado < 0) resultado <- 0
+    
+    resultado
+  })
+  
+  output$thermometer <- renderPlot({
+    symbols(0, thermometers = cbind(0.3, 1, 4.1/9), fg = 2, xlab = NA, ylab = NA, inches = 2.5, yaxt='n', xaxt='n', bty='n')
   })
   
   output$frame <- renderUI({
