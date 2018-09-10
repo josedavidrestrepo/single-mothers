@@ -6,7 +6,6 @@ library(DT)
 library(shiny)
 library(visNetwork)
 
-
 # sqldf("attach db as new")
 #
 # read.csv.sql("hogar.csv", sql = "create table hogar as select * from file",
@@ -15,45 +14,31 @@ library(visNetwork)
 #             dbname = "db")
 # closeAllConnections()
 
-#cargando los paquetes necesarios
-
 #Lectura de los datos
-data <- read.csv("madres.csv", header=T)
-sapply(data, class) ##veridficando la clase de las variables
-datos<-data[,-c(1,2,12,13)] #eliminando orden, llave hogar, niveleducativo y salario por na
-datos<-na.omit(datos)
-#
-# ###------------------- MODELOS -----------------------------###
-set.seed(1) #semilla para que a todos nos salgan los mismos resultados
-trainingRows <- sample(1:nrow(datos), 0.7 * nrow(datos))
-trainingData <- datos[trainingRows, ] ##datos para entrenar el modelo
-testData <- datos[-trainingRows, ] ##datos para test del modelo
-#
-# #cambiando la clase de la variable respuesta
-datos$SATISFACCION_VIDA<-as.numeric(datos$SATISFACCION_VIDA)
-# Modelo Beta
-z<-(datos$SATISFACCION_VIDA)/10 # reduciendo el rango a (0,1)
-zt<-(z*(length(z)-1)+0.5)/length(z) #aplicando la transformacion
-#modelo lm
-modelo1<-lm(zt~ ANOS_CUMPLIDOS+ CANT_PERSONAS+AFILIADO_SS+
-              LEER_ESCRIBIR+INGRESO_HOGAR+COMIDA+SATISFACCCION_INGRESO+
-              TIPO_VIVIENDA +ESTADO_SALUD+SATISFACCION_SEGURIDAD+
-              SATISFACCCION_INGRESO,
-            data=datos)
-# summary(modelo1)
+# data <- read.csv("madres.csv", header=T)
+# # sapply(data, class) ##veridficando la clase de las variables
+# datos<-data[,-c(1,2,12,13)] #eliminando orden, llave hogar, niveleducativo y salario por na
+# datos<-na.omit(datos)
+# #
+# # ###------------------- MODELOS -----------------------------###
+# set.seed(1) #semilla para que a todos nos salgan los mismos resultados
+# trainingRows <- sample(1:nrow(datos), 0.7 * nrow(datos))
+# trainingData <- datos[trainingRows, ] ##datos para entrenar el modelo
+# testData <- datos[-trainingRows, ] ##datos para test del modelo
+# #
+# # #cambiando la clase de la variable respuesta
+# datos$SATISFACCION_VIDA<-as.numeric(datos$SATISFACCION_VIDA)
+# 
+# #modelo lm
+# modelo<-lm(SATISFACCION_VIDA ~ ANOS_CUMPLIDOS + CANT_PERSONAS +
+#               INGRESO_HOGAR + COMIDA + HIJOS + TIPO_VIVIENDA + 
+#               SATISFACCCION_INGRESO,
+#             data=datos)
+# 
+# 
+# saveRDS(modelo, "modelo.rds")
 
-#modelo beta
-modelo2<-betareg(zt~ ANOS_CUMPLIDOS+ CANT_PERSONAS+AFILIADO_SS+
-                   LEER_ESCRIBIR+INGRESO_HOGAR+
-                   COMIDA+SATISFACCCION_INGRESO+TIPO_VIVIENDA
-                 +ESTADO_SALUD+SATISFACCION_SEGURIDAD+
-                   SATISFACCCION_INGRESO,
-                 data=datos)
-
-# summary(modelo2)
-# plot(modelo2)
-
-## PARA HACER LAS PREDICCIONES
+modelo <- readRDS("modelo.rds")
 
 
 function(input, output) { 
@@ -242,12 +227,13 @@ function(input, output) {
 
   output$table <- renderDataTable({
     desc_values <- c(
-      "Ingreso Hogar"=c("1"="No alcanza para cubrir los gatos mínimos","2"="Sólo alcanza para cubrir los gastos mínimos","3"="Cubre más que los gastos mínimos"),
-      "Leer y Escribir"=c("1"="SI","2"="No"),
-      "Comida"=c("1"="SI","2"="No"),
-      "Seguridad Social"=c("1"="SI","2"="NO","9"="No se"),
-      "Estado de Salud"=c("1"="Muy bueno","2"="Bueno","3"="Regular","4"="Malo"),
-      "Tipo de Vivienda"=c("1"="Casa","2"="Apartamento","3"="Cuarto(s)","4"="Vivienda (casa)indigena","5"="Otro tipo de vivienda (carpa, tienda, vagón, embarcación, cueva, refugio natural, puente, etc)")
+      "Ingreso Hogar"=c("1"="No alcanza para cubrir los gatos mínimos",
+                        "2"="Sólo alcanza para cubrir los gastos mínimos",
+                        "3"="Cubre más que los gastos mínimos"
+                        ),
+      "Comida"=c("1"="SI","2"="NO"),
+      "Tipo de Vivienda"=c("1"="Casa","2"="Apartamento","3"="Cuarto(s)",
+                           "4"="Vivienda (casa) indígena","5"="Otro tipo de vivienda (carpa, tienda, vagón, embarcación, cueva, refugio natural, puente, etc)")
     )
     
     llave_hog_sel = input$table_llaves_cell_clicked$value
@@ -263,26 +249,18 @@ function(input, output) {
     }
     
     query <- paste("SELECT ORDEN [ID], ANOS_CUMPLIDOS [Edad], CANT_PERSONAS [Cantidad de Personas], 
-                    INGRESO_HOGAR [Ingreso Hogar], AFILIADO_SS [Seguridad Social], LEER_ESCRIBIR [Leer y Escribir], 
-                    COMIDA [Comida], ESTADO_SALUD [Estado de Salud], TIPO_VIVIENDA [Tipo de Vivienda], 
-                    SATISFACCCION_INGRESO [Satisfaccion Ingreso], SATISFACCION_SEGURIDAD [Satisfaccion Seguridad]
+                    INGRESO_HOGAR [Ingreso Hogar], HIJOS [Cantidad de Hijos],
+                    TIPO_VIVIENDA [Tipo de Vivienda], SATISFACCCION_INGRESO [Satisfaccion Ingreso],
+                    SATISFACCION_VIDA [Satisfaccion Vida]
                    FROM madres WHERE LLAVEHOG = '", llave_hog_sel, sep="")
     query <- paste(query,"\'",sep="")
     familia <- sqldf(query, dbname = "db", user = "")
     
     for (row in 1:nrow(familia)) {
       ingreso <- toString(familia[row, 'Ingreso Hogar'])
-      leer_escribir <- toString(familia[row, 'Leer y Escribir'])
-      comida <- toString(familia[row, 'Comida'])
-      ss <- toString(familia[row, 'Seguridad Social'])
-      salud <- toString(familia[row, 'Estado de Salud'])
       tipo_vivienda <- toString(familia[row, 'Tipo de Vivienda'])
       
       familia[row, 'Ingreso Hogar'] = desc_values[paste("Ingreso Hogar.", ingreso, sep="")]
-      familia[row, 'Leer y Escribir'] = desc_values[paste("Leer y Escribir.", leer_escribir, sep="")]
-      familia[row, 'Comida'] = desc_values[paste("Comida.", comida, sep="")]
-      familia[row, 'Seguridad Social'] = desc_values[paste("Seguridad Social.", ss, sep="")]
-      familia[row, 'Estado de Salud'] = desc_values[paste("Estado de Salud.", salud, sep="")]
       familia[row, 'Tipo de Vivienda'] = desc_values[paste("Tipo de Vivienda.", tipo_vivienda, sep="")]
     }
     
@@ -296,29 +274,23 @@ function(input, output) {
   
   output$predict = renderText({
     
-    read_write <- 2
-    if (input$read_write){
-      read_write <- 1
-    }
-    
     eating <- 2
     if (input$eating){
       eating <- 1
     }
     
     newdatos<-data.frame(
-      wt=input$age, input$count_persons, as.numeric(input$ss_joined), 
-      read_write, as.numeric(input$monthly_income), eating, input$income_satisfaction,
-      as.numeric(input$house_type), as.numeric(input$health), input$security_satisfaction,
-      input$income_satisfaction)
-    names(newdatos) <- c("ANOS_CUMPLIDOS", "CANT_PERSONAS","AFILIADO_SS",
-                         "LEER_ESCRIBIR","INGRESO_HOGAR",
-                           "COMIDA","SATISFACCCION_INGRESO","TIPO_VIVIENDA",
-                         "ESTADO_SALUD","SATISFACCION_SEGURIDAD",
-                         "SATISFACCCION_INGRESO")
-    s<-predict(modelo1,newdata=newdatos)
-    h<-10*(s*330-0.5)/(330-1)### este es!!!!
-    resultado<-round(h,0)
+      wt=input$age, input$count_persons, as.numeric(input$home_income), eating, input$sons,
+          as.numeric(input$house_type), input$income_satisfaction
+    )
+    names(newdatos) <-  c("ANOS_CUMPLIDOS", "CANT_PERSONAS",
+                          "INGRESO_HOGAR",
+                          "COMIDA","HIJOS","TIPO_VIVIENDA",
+                          "SATISFACCCION_INGRESO")
+    
+    s<-predict(modelo,newdata=newdatos)
+    
+    resultado <- round(s,0)
     
     paste("La satisfacción predicha para esta madre soltera es: ", resultado)
   })
