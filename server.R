@@ -290,6 +290,7 @@ function(input, output) {
     
     if (is.na(age)) age <- 0
     if (is.na(sons)) sons <- 0
+    if (is.na(count_persons)) count_persons <- 0
     
     newdatos<-data.frame(
       wt= age, count_persons, home_income, eating, sons,
@@ -315,6 +316,6 @@ function(input, output) {
   })
   
   output$frame <- renderUI({
-    tags$iframe(src="https://biteable.com/watch/embed/tae-2018-02-1990018", height=500, width=800)
+    tags$iframe(src="https://biteable.com/watch/tae-1992701", height=500, width=800)
   })
 }
