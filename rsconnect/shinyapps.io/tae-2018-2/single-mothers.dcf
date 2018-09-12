@@ -5,8 +5,8 @@ account: tae-2018-2
 server: shinyapps.io
 hostUrl: https://api.shinyapps.io/v1
 appId: 426225
-bundleId: 1579493
+bundleId: 1579524
 url: https://tae-2018-2.shinyapps.io/single-mothers/
-when: 1536624571.88524
+when: 1536625888.88893
 asMultiple: FALSE
 asStatic: FALSE

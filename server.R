@@ -316,6 +316,6 @@ function(input, output) {
   })
   
   output$frame <- renderUI({
-    tags$iframe(src="https://biteable.com/watch/tae-1992701", height=500, width=800)
+    tags$iframe(src="https://biteable.com/watch/embed/tae-1992701", height=500, width=800)
   })
 }
